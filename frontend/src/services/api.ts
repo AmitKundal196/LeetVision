@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const API_PORT = '5001';
-const API_BASE_URL_PORT = `http://localhost:${API_PORT}/api`;
+const API_BASE_URL_PORT = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5001/api' : 'https://leetvision.onrender.com/api');
 const api = axios.create({
   baseURL: API_BASE_URL_PORT,
   headers: {
