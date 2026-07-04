@@ -7,7 +7,13 @@ import leetcodeRoutes from './routes/leetcodeRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import { initCronJobs } from './cron/cronJobs.js';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,10 +47,17 @@ app.get('/api/healthz', (req, res) => {
   });
 });
 
-// Serve frontend in production (optional fallback)
-app.get('/', (req, res) => {
-  res.send('LeetVision AI API Server');
-});
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('LeetVision AI API Server');
+  });
+}
 
 // Global 404 handler
 app.use((req, res) => {
