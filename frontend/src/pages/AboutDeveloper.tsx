@@ -2,8 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Download, Globe, Briefcase, Mail, Github, Linkedin, MapPin, ExternalLink, 
-  Code, Database, Cpu, Terminal, ArrowRight, Star, Award, Sparkles, Clock, Rocket,
-  GraduationCap, LineChart, Code2, AppWindow, User as UserIcon
+  Code, Database, Cpu, Terminal, ArrowRight, Sparkles, Clock, Rocket,
+  GraduationCap, Code2, AppWindow, User as UserIcon
 } from 'lucide-react';
 
 const FadeIn = ({ children, delay = 0, direction = 'up' }: { children: React.ReactNode, delay?: number, direction?: 'up'|'left'|'right' }) => {
