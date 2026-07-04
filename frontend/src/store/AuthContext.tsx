@@ -12,6 +12,7 @@ interface AuthContextType {
   saveOnboarding: (data: OnboardingData) => Promise<void>;
   updateUserDirectly: (updatedUser: User) => void;
   forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,8 +135,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string, newPassword: string) => {
+    setLoading(true);
+    try {
+      await api.post('/auth/reset-password', { email, newPassword });
+    } catch (err: any) {
+      throw new Error(err.response?.data?.error || err.message || 'Reset password request failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, oauthLogin, logout, saveOnboarding, updateUserDirectly, forgotPassword }}>
+    <AuthContext.Provider value={{ user, loading, login, register, oauthLogin, logout, saveOnboarding, updateUserDirectly, forgotPassword, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

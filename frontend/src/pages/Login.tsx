@@ -6,12 +6,12 @@ import { Mail, Lock, User, Github, AlertCircle, ArrowRight, CheckCircle2, Flame,
 import { AnimatedNumber } from '../components/AnimatedNumber';
 
 export const Login: React.FC = () => {
-  const { login, register, forgotPassword } = useAuth();
+  const { login, register, forgotPassword, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const expired = searchParams.get('expired') === 'true';
 
-  const [view, setView] = useState<'login' | 'register' | 'forgot'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'forgot' | 'reset'>('login');
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,8 +39,20 @@ export const Login: React.FC = () => {
     try {
       if (view === 'forgot') {
         await forgotPassword(email);
-        setSuccess('If an account exists, a password reset link has been sent to your email.');
-        setTimeout(() => setView('login'), 3000);
+        setSuccess('If an account exists, a password reset link has been sent. (Mock: Proceeding to reset...)');
+        setTimeout(() => {
+          setView('reset');
+          setSuccess('');
+          setPassword('');
+        }, 2000);
+      } else if (view === 'reset') {
+        await resetPassword(email, password);
+        setSuccess('Password updated successfully! You can now log in.');
+        setTimeout(() => {
+          setView('login');
+          setSuccess('');
+          setPassword('');
+        }, 2000);
       } else if (view === 'register') {
         await register(email, password, name);
         navigate('/onboarding');
@@ -170,11 +182,13 @@ export const Login: React.FC = () => {
               {view === 'login' && 'Welcome back'}
               {view === 'register' && 'Create your account'}
               {view === 'forgot' && 'Reset password'}
+              {view === 'reset' && 'Set new password'}
             </h2>
             <p className="text-zinc-500 text-sm">
               {view === 'login' && 'Enter your details to access your dashboard.'}
               {view === 'register' && 'Start optimizing your interview prep today.'}
               {view === 'forgot' && 'We will send you a secure link to reset it.'}
+              {view === 'reset' && 'Enter your new password below.'}
             </p>
           </div>
 
@@ -239,10 +253,12 @@ export const Login: React.FC = () => {
                   </div>
                 </div>
 
-                {view !== 'forgot' && (
+                {(view !== 'forgot') && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-zinc-700">Password</label>
+                      <label className="text-sm font-medium text-zinc-700">
+                        {view === 'reset' ? 'New Password' : 'Password'}
+                      </label>
                       {view === 'login' && (
                         <button type="button" onClick={() => { setView('forgot'); setError(''); setSuccess(''); }} className="text-sm text-blue-600 font-semibold hover:underline">
                           Forgot password?
@@ -283,12 +299,12 @@ export const Login: React.FC = () => {
                   disabled={loading}
                   className="w-full rounded-xl bg-zinc-900 py-3 text-sm font-semibold text-white shadow hover:bg-zinc-800 disabled:opacity-70 transition-all flex items-center justify-center gap-2 mt-2"
                 >
-                  {loading ? 'Please wait...' : view === 'login' ? 'Sign In' : view === 'register' ? 'Create Account' : 'Reset Password'}
+                  {loading ? 'Please wait...' : view === 'login' ? 'Sign In' : view === 'register' ? 'Create Account' : view === 'reset' ? 'Update Password' : 'Reset Password'}
                   {!loading && <ArrowRight className="h-4 w-4" />}
                 </button>
               </form>
 
-              {view !== 'forgot' && (
+              {(view === 'login' || view === 'register') && (
                 <>
                   <div className="relative my-6 text-center">
                     <div className="absolute inset-0 flex items-center">
@@ -322,6 +338,7 @@ export const Login: React.FC = () => {
                 </>
               )}
 
+              {view !== 'reset' && (
               <div className="mt-8 text-center text-sm">
                 {view === 'login' ? (
                   <p className="text-zinc-600">
@@ -339,6 +356,7 @@ export const Login: React.FC = () => {
                   </p>
                 )}
               </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

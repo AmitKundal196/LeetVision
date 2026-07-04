@@ -68,8 +68,13 @@ export async function login(req, res) {
 
   try {
     const user = await dbService.findUser({ email });
-    if (!user || user.provider !== 'email') {
+    if (!user) {
       return res.status(401).json({ success: false, error: 'Invalid email or password.' });
+    }
+
+    if (user.provider !== 'email') {
+      const providerName = user.provider.charAt(0).toUpperCase() + user.provider.slice(1);
+      return res.status(401).json({ success: false, error: `This email is registered via ${providerName}. Please sign in with ${providerName}.` });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -258,11 +263,23 @@ export async function forgotPassword(req, res) {
 }
 
 export async function resetPassword(req, res) {
-  // Mock endpoint for password reset
-  const { token, newPassword } = req.body;
-  if (!token || !newPassword) return res.status(400).json({ success: false, error: 'Token and new password are required.' });
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword) return res.status(400).json({ success: false, error: 'Email and new password are required.' });
 
   try {
+    const user = await dbService.findUser({ email });
+    if (!user) {
+      // Return success to prevent email enumeration, but we won't change anything
+      return res.json({ success: true, message: 'Password has been reset successfully.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // Update password and ensure they can log in via email now
+    await dbService.updateUser(
+      { _id: user._id },
+      { $set: { password: hashedPassword, provider: 'email' } }
+    );
+
     res.json({ success: true, message: 'Password has been reset successfully.' });
   } catch (error) {
     res.status(500).json({ success: false, error: `Failed to reset password: ${error.message}` });
