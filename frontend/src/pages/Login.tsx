@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../store/AuthContext';
 import { Mail, Lock, User, Github, AlertCircle, ArrowRight, CheckCircle2, Flame, Trophy } from 'lucide-react';
 import { AnimatedNumber } from '../components/AnimatedNumber';
+import { GoogleLogin } from '@react-oauth/google';
 
 export const Login: React.FC = () => {
-  const { login, register, forgotPassword, resetPassword } = useAuth();
+  const { login, register, forgotPassword, resetPassword, oauthLogin } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const expired = searchParams.get('expired') === 'true';
@@ -22,9 +23,13 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleOAuth = (provider: 'google' | 'github') => {
-    if (provider === 'google') {
-      navigate('/oauth/google');
+  const handleOAuth = (provider: 'google' | 'github', credential?: string) => {
+    if (provider === 'google' && credential) {
+      oauthLogin('google', credential).then(() => {
+        navigate('/dashboard');
+      }).catch(err => {
+        setError(err.message || 'Google Login failed.');
+      });
     } else {
       navigate('/oauth/github'); // Can be implemented similarly
     }
@@ -315,21 +320,28 @@ export const Login: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleOAuth('google')}
-                      disabled={loading}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white py-2.5 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-all"
-                    >
-                      <GoogleIcon />
-                      Google
-                    </button>
+                  <div className="grid grid-cols-2 gap-3 items-center">
+                    <div className="flex w-full h-[46px] items-center justify-center rounded-xl border border-zinc-300 bg-white overflow-hidden shadow-sm hover:bg-zinc-50 transition-all">
+                      <GoogleLogin
+                        onSuccess={credentialResponse => {
+                          if (credentialResponse.credential) {
+                            handleOAuth('google', credentialResponse.credential);
+                          }
+                        }}
+                        onError={() => {
+                          setError('Google login failed.');
+                        }}
+                        type="icon"
+                        shape="circle"
+                        theme="outline"
+                      />
+                      <span className="ml-2 text-sm font-semibold text-zinc-700">Google</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleOAuth('github')}
                       disabled={loading}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white py-2.5 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-all"
+                      className="flex w-full h-[46px] items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 transition-all"
                     >
                       <Github className="h-5 w-5" />
                       GitHub
