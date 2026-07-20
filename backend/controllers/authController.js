@@ -1,17 +1,17 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { dbService } from '../services/dbService.js';
+import { OAuth2Client } from 'google-auth-library';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_access_key_123_leetvision_ai';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key_123_leetvision_ai';
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Helper to generate tokens
 function generateTokens(user, rememberMe = false) {
   const payload = { id: user._id, email: user.email, name: user.name };
   const refreshExpiry = rememberMe ? '30d' : '7d';
   
-  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: refreshExpiry });
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET || 'super_secret_access_key_123_leetvision_ai', { expiresIn: '15m' });
+  const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key_123_leetvision_ai', { expiresIn: refreshExpiry });
   
   return { accessToken, refreshToken };
 }
@@ -74,7 +74,7 @@ export async function login(req, res) {
 
     if (user.provider !== 'email') {
       const providerName = user.provider.charAt(0).toUpperCase() + user.provider.slice(1);
-      return res.status(401).json({ success: false, error: `This email is registered via ${providerName}. Please sign in with ${providerName}.` });
+      return res.status(401).json({ success: false, error: `Account was created by ${providerName}. Please login with ${providerName}.` });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -198,6 +198,56 @@ export async function oauthMock(req, res) {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: `OAuth Simulation failed: ${error.message}` });
+  }
+}
+
+export async function googleLogin(req, res) {
+  const { credential } = req.body;
+  if (!credential) {
+    return res.status(400).json({ success: false, error: 'Google credential is required.' });
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const name = payload.name;
+    const avatarUrl = payload.picture;
+
+    let user = await dbService.findUser({ email });
+    if (!user) {
+      user = await dbService.createUser({
+        email,
+        name,
+        provider: 'google',
+        avatarUrl,
+        isOnboarded: false
+      });
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+    await dbService.updateUser({ _id: user._id }, { $set: { refreshToken } });
+
+    res.json({
+      success: true,
+      message: 'Logged in with Google successfully.',
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        isOnboarded: user.isOnboarded,
+        onboarding: user.onboarding,
+        avatarUrl: user.avatarUrl
+      }
+    });
+  } catch (error) {
+    console.error('Google verification failed:', error);
+    res.status(401).json({ success: false, error: 'Invalid Google token.' });
   }
 }
 
