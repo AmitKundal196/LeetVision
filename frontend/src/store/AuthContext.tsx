@@ -69,20 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const oauthLogin = async (provider: 'google' | 'github', emailOrCredential?: string) => {
+  const oauthLogin = async (provider: 'google' | 'github', email?: string) => {
     setLoading(true);
     try {
-      let data;
-      if (provider === 'google' && emailOrCredential && !emailOrCredential.includes('@')) {
-        // It's a Google JWT credential
-        const res = await api.post(`/auth/oauth/google`, { credential: emailOrCredential });
-        data = res.data;
-      } else {
-        // Fallback to mock
-        const res = await api.post(`/auth/oauth/mock/${provider}`, { email: emailOrCredential });
-        data = res.data;
-      }
-      
+      const { data } = await api.post(`/auth/oauth/mock/${provider}`, { email });
       if (data.success) {
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);

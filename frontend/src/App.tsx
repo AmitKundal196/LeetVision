@@ -14,6 +14,7 @@ import Settings from './pages/Settings';
 import Admin from './pages/Admin';
 import Sync from './pages/Sync';
 import Debug from './pages/Debug';
+import OAuthGoogle from './pages/OAuthGoogle';
 import AboutDeveloper from './pages/AboutDeveloper';
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ export const App: React.FC = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
+              <Route path="/oauth/google" element={<OAuthGoogle />} />
               
               {/* Onboarding - protected, but does not require onboarded status yet */}
               <Route 
