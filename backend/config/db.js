@@ -6,9 +6,9 @@ dotenv.config();
 let isMongoConnected = false;
 
 export async function connectDB() {
-  const mongoUri = process.env.MONGO_URI;
+  const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
   if (!mongoUri) {
-    console.warn('⚠️ MONGO_URI environment variable not configured. Falling back to local JSON database.');
+    console.warn('⚠️ MONGODB_URI environment variable not configured. Falling back to local JSON database.');
     isMongoConnected = false;
     return false;
   }
