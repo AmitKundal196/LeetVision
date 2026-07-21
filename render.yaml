@@ -1,10 +1,9 @@
 services:
-  # Backend Web Service
   - type: web
-    name: leetvision-backend
+    name: leetvision-fullstack
     env: node
-    rootDir: backend
-    buildCommand: npm install
+    # Run the install:all and build scripts from the root package.json
+    buildCommand: npm run install:all && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -12,26 +11,15 @@ services:
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        sync: false # You will input your MongoDB Atlas URI in the Render Dashboard
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: GOOGLE_CLIENT_ID
         sync: false
-
-  # Frontend Static Site
-  - type: web
-    name: leetvision-frontend
-    env: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    envVars:
+      # This tells the frontend to use the same domain for API requests
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: leetvision-backend
-          envVarKey: RENDER_EXTERNAL_URL
+        value: /api
       - key: VITE_GOOGLE_CLIENT_ID
         sync: false
