@@ -2,6 +2,7 @@ services:
   - type: web
     name: leetvision-fullstack
     env: node
+    plan: free
     # Run the install:all and build scripts from the root package.json
     buildCommand: npm run install:all && npm run build
     startCommand: npm start
